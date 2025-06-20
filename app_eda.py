@@ -333,7 +333,7 @@ class EDA:
             st.header("누적영역그래프 등 적절한 시각화")
             pivot_df = df.pivot(index='연도', columns='지역', values='인구')
             kor_to_eng = {
-                '전국':'National'
+                '전국':'National',
                 '서울':'Seoul','부산':'Busan','대구':'Daegu','인천':'Incheon',
                 '광주':'Gwangju','대전':'Daejeon','울산':'Ulsan','세종':'Sejong',
                 '경기':'Gyeonggi','강원':'Gangwon','충북':'Chungbuk','충남':'Chungnam',
