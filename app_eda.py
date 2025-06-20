@@ -286,7 +286,7 @@ class EDA:
             # 절대 변화량 (천 단위)
             fig1, ax1 = plt.subplots()
             sns.barplot(
-                x='change_thousands', y='지역',
+                x='change_thousands', y='Region',
                 data=change_sorted, ax=ax1
             )
             for i, v in enumerate(change_sorted['change_thousands']):
