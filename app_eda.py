@@ -204,70 +204,47 @@ class EDA:
             st.info("population_trends.csv 파일을 업로드 해주세요.")
             return
 
-        df = pd.read_csv(uploaded, parse_dates=['연도'])
+        # —————————————————————————————————————————————————————————
+        # 1) '연도'를 parse_dates 하지 않고, 숫자(int)로 변환
+        df = pd.read_csv(uploaded)
+        df['연도'] = pd.to_numeric(df['연도'], errors='coerce').astype(int)
+        # —————————————————————————————————————————————————————————
 
-        # 1) 세종 지역 결측치 '-' → 0 치환, 주요 열 숫자형 변환
+        # 2) 세종 지역 결측치 '-' → 0 치환, 주요 열 숫자형 변환
         mask_sejong = df['지역'] == '세종'
         df.loc[mask_sejong, :] = df.loc[mask_sejong, :].replace('-', 0)
         df[['인구', '출생아수(명)', '사망자수(명)']] = df[['인구', '출생아수(명)', '사망자수(명)']].apply(pd.to_numeric)
 
-        # 탭 구성
-        tabs = st.tabs([
-            "기초 통계",
-            "연도별 추이",
-            "지역별 분석",
-            "변화량 분석",
-            "시각화"
-        ])
-
-        # 탭 0: 기초 통계
-        with tabs[0]:
-            st.header("🔍 Data Overview")
-            # df.info()
-            buffer = io.StringIO()
-            df.info(buf=buffer)
-            st.subheader("DataFrame Info")
-            st.text(buffer.getvalue())
-            # df.describe()
-            st.subheader("Summary Statistics")
-            st.dataframe(df.describe())
+        # … 이하 생략 …
 
         # 탭 1: 연도별 추이 & 2035 예측
         with tabs[1]:
             st.header("📈 Nationwide Population Trend & Prediction")
             df_nat = df[df['지역'] == '전국'].sort_values('연도')
 
-            # 연도별 실제 인구 추이
+            # 실제 추이 그리기
             fig1, ax1 = plt.subplots()
-            sns.lineplot(
-                data=df_nat, x='연도', y='인구',
-                marker='o', ax=ax1, label='Actual'
-            )
+            sns.lineplot(data=df_nat, x='연도', y='인구', marker='o', ax=ax1)
             ax1.set_title('Population Trend')
             ax1.set_xlabel('Year')
             ax1.set_ylabel('Population')
             st.pyplot(fig1)
 
-            # 최근 3년 평균 인구 증감 = births - deaths 의 평균
+            # 최근 3년 평균 인구 증감 계산
             recent = df_nat.tail(3)
             avg_change = (recent['출생아수(명)'] - recent['사망자수(명)']).mean()
-            last_year = recent['연도'].iloc[-1]
-            last_pop = recent['인구'].iloc[-1]
+            last_year = recent['연도'].iloc[-1]      # <-- 이제 int
+            last_pop  = recent['인구'].iloc[-1]
 
+            # 예측: last_year+1 부터 2035 까지
             years_pred = list(range(last_year + 1, 2036))
-            pops_pred = [last_pop + avg_change * (y - last_year) for y in years_pred]
+            pops_pred  = [last_pop + avg_change * (y - last_year) for y in years_pred]
             df_pred = pd.DataFrame({'연도': years_pred, 'Population': pops_pred})
 
-            # 실제 + 예측 추이
+            # 실제 + 예측 그리기
             fig2, ax2 = plt.subplots()
-            sns.lineplot(
-                data=df_nat, x='연도', y='인구',
-                marker='o', ax=ax2, label='Actual'
-            )
-            sns.lineplot(
-                data=df_pred, x='연도', y='Population',
-                marker='o', ax=ax2, label='Predicted'
-            )
+            sns.lineplot(data=df_nat,      x='연도', y='인구',      marker='o', ax=ax2, label='Actual')
+            sns.lineplot(data=df_pred,     x='연도', y='Population', marker='o', ax=ax2, label='Predicted')
             ax2.set_title('Population with 2035 Prediction')
             ax2.set_xlabel('Year')
             ax2.set_ylabel('Population')
